@@ -1,0 +1,8 @@
+#!/bin/sh
+
+if [ -n "$1" ]; then
+  find ./ -depth -type d -exec rename_file_perl_expression {} "$1" \;
+  find ./ -depth -type f -exec rename_file_perl_expression {} "$1" \;
+else
+  echo usage: $0 perl_expression
+fi

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SysRq Calc</title>
+</head>
+<body>
+    <h3>SysRq Bitmask: <input type="number" id="val" value="438" min="0" max="511"></h3>
+    <div id="box"></div>
+
+    <script>
+        const flags = [
+            { b: 2,   k: '0-9',       d: 'Console log level' },
+            { b: 4,   k: 'k, r',      d: 'Keyboard control (SAK, unraw)' },
+            { b: 8,   k: 't,m,p,w,v', d: 'Debugging task dumps' },
+            { b: 16,  k: 's',         d: 'Emergency Sync' },
+            { b: 32,  k: 'u',         d: 'Remount Read-Only' },
+            { b: 64,  k: 'e, i, f',   d: 'Process signals (TERM, KILL, OOM)' },
+            { b: 128, k: 'b, o',      d: 'Reboot / Poweroff' },
+            { b: 256, k: 'n',         d: 'Nice RT tasks' }
+        ];
+
+        const valInput = document.getElementById('val');
+        const box = document.getElementById('box');
+
+        // Create UI elements
+        flags.forEach(f => {
+            const label = document.createElement('label');
+            label.style.display = 'block';
+            label.innerHTML = `<input type="checkbox" data-bit="${f.b}"> Bit ${f.b} (Key: <b>${f.k}</b>) - ${f.d}`;
+            box.appendChild(label);
+        });
+
+        const checks = box.querySelectorAll('input');
+
+        // Decode: Value changes -> update checkboxes
+        function decode() {
+            let v = parseInt(valInput.value) || 0;
+            checks.forEach(c => {
+                let bit = parseInt(c.dataset.bit);
+                c.checked = v === 1 || (v & bit) === bit;
+            });
+        }
+
+        // Encode: Checkbox changes -> update value
+        function encode() {
+            let total = 0;
+            checks.forEach(c => {
+                if (c.checked) total += parseInt(c.dataset.bit);
+            });
+            valInput.value = total;
+        }
+
+        valInput.addEventListener('input', decode);
+        box.addEventListener('change', encode);
+        decode(); // Initial run
+    </script>
+</body>
+</html>

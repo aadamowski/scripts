@@ -1,0 +1,1 @@
+pstree -plau | less -in

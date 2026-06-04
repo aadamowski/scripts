@@ -1,0 +1,4 @@
+#!/bin/sh
+
+gpg --keyserver subkeys.pgp.net --recv "$1" && gpg --export --armor "$1" | sudo apt-key add -
+

@@ -1,0 +1,4 @@
+#!/bin/sh
+filename="$1" 
+perl_expression="$2"
+mv -v "$filename" "$(echo "$filename" | perl -pe "$perl_expression")"
