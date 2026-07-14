@@ -1,6 +1,8 @@
-#!/bin/sh
+#!/usr/bin/env bash
+# Author: Aleksander Adamowski
+set -euo pipefail
 host="$1"
-echo '' | openssl s_client -connect "$1" 2>/dev/null | \
+printf '\n' | openssl s_client -connect "$host" 2>/dev/null | \
  sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | \
  openssl x509 -noout -enddate | perl -e "
 use POSIX qw(strftime);

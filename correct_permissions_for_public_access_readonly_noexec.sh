@@ -1,8 +1,13 @@
-#!/bin/sh
+#!/usr/bin/env bash
+set -euo pipefail
 #
-# by OLO
-# Tue Apr  8 20:24:44 CEST 2003
+# Description: Sets permissions for public access: read-only and no-execute.
+# Dependencies: bash, chmod
+# Usage: ./correct_permissions_for_public_access_readonly_noexec.sh
+# Author: Aleksander Adamowski
 #
+# Note: Applies chmod -R ugo-x,u=rwX,go=rX to the current directory.
 
-#find ./ -type f -exec chmod ugo-x {} \;
+
 chmod -R ugo-x,u=rwX,go=rX .
+

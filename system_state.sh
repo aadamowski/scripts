@@ -1,53 +1,61 @@
-echo =============
-echo uptime:
+#!/usr/bin/env bash
+#
+# Description: Displays system state information.
+# Author: Aleksander Adamowski
+#
+
+set -euo pipefail
+
+printf "=============\n"
+printf "uptime:\n"
 uptime
-echo =============
-echo iostat:
+printf "=============\n"
+printf "iostat:\n"
 iostat
-echo =============
-echo vmstat:
+printf "=============\n"
+printf "vmstat:\n"
 vmstat
-echo =============
-echo free:
+printf "=============\n"
+printf "free:\n"
 free
-echo =============
-echo w:
+printf "=============\n"
+printf "w:\n"
 w
-echo =============
-echo ps xuwa:
+printf "=============\n"
+printf "ps xuwa:\n"
 ps xuwa
-echo =============
-echo pstree -plau:
+printf "=============\n"
+printf "pstree -plau:\n"
 pstree -plau
-echo ================================
-echo ============= PROC =============
-echo ================================
-echo /proc/partitions:
+printf "================================\n"
+printf "============= PROC =============\n"
+printf "================================\n"
+printf "/proc/partitions:\n"
 cat /proc/partitions
-echo =============
-echo /proc/swaps:
+printf "=============\n"
+printf "/proc/swaps:\n"
 cat /proc/swaps
-echo =============
-echo /proc/stat:
+printf "=============\n"
+printf "/proc/stat:\n"
 cat /proc/stat
-echo =============
-echo /proc/vmstat:
+printf "=============\n"
+printf "/proc/vmstat:\n"
 cat /proc/vmstat
-echo =============
-echo /proc/diskstats:
+printf "=============\n"
+printf "/proc/diskstats:\n"
 cat /proc/diskstats
-echo =============
-echo /proc/meminfo:
+printf "=============\n"
+printf "/proc/meminfo:\n"
 cat /proc/meminfo
-echo =============
-echo /proc/ioports:
+printf "=============\n"
+printf "/proc/ioports:\n"
 cat /proc/ioports
-echo =============
-echo /proc/iomem:
+printf "=============\n"
+printf "/proc/iomem:\n"
 cat /proc/iomem
-echo =============
-echo /proc/cpuinfo:
+printf "=============\n"
+printf "/proc/cpuinfo:\n"
 cat /proc/cpuinfo
-echo =============
-echo /proc/interrupts:
+printf "=============\n"
+printf "/proc/interrupts:\n"
 cat /proc/interrupts

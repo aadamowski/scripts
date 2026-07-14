@@ -1,7 +1,18 @@
-#!/usr/bin/perl
-use POSIX qw(strftime);
-my $yest=time - 60 * 60 * 24;
-my $ndst = (localtime $now)[8] > 0;
-my $tdst = (localtime $then)[8] > 0;
-$yest -= ($tdst - $ndst) * 60 * 60;
-print strftime("%F", gmtime($yest))."\n";
+#!/usr/bin/env perl
+#
+# Description: Prints the date of yesterday in YYYY-MM-DD format.
+# Dependencies: perl (Time::Piece)
+# Usage: perl yesterday.pl
+# Author: Aleksander Adamowski
+
+use strict;
+use warnings;
+use Time::Piece;
+
+sub main {
+    my $now = localtime;
+    my $yesterday = $now - (24 * 60 * 60);
+    print $yesterday->strftime('%Y-%m-%d') . "\n";
+}
+
+main();

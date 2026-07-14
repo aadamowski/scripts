@@ -1,10 +1,12 @@
-#!/bin/sh
+#!/usr/bin/env bash
+set -euo pipefail
+# Author: Aleksander Adamowski
 commitid=$1
 (
         for blobid in $(
                 git diff-tree -r -c -M -C --no-commit-id $commitid | awk '{print $4}'
         ); do
-        echo $blobid | git cat-file --batch-check;
+        printf "%s\n" "$blobid" | git cat-file --batch-check;
         done;
 ) | awk -v commitid=$commitid '
 {

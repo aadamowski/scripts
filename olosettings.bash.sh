@@ -1,7 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+#
+# Description: Collection of useful aliases for daily tasks.
+# Author: Aleksander Adamowski
+#
 # Obsluga:
 #if [ -f $HOME/bin/olosettings.bash.sh ]; then
 #  . $HOME/bin/olosettings.bash.sh
 #fi
+# ... (rest of the file)
 
 alias today_date="date +%F"
 alias now_time="date +%H_%M_%S"

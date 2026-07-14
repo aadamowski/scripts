@@ -1,41 +1,46 @@
-#!/usr/bin/perl -w
-# by OLO
-# Tue Aug 16 11:41:26 CEST 2005
-# Monitoruje przyrastajacy plik logow oczekujac na pojawienie sie wzorca.
-# Po pojawieniu sie wzorca wykonuje polecenie.
+#!/usr/bin/env perl
+#
+# Description: Monitors a growing log file for a regex pattern and executes a command upon matching.
+# Dependencies: perl, File::Tail
+# Usage: perl monitor_logfile_cmd.pl [-n] <logfile> '<regexp>' '<shell_command>'
+# Author: Aleksander Adamowski
+#
+# Options:
+# -n: Exit after the first match.
+
 use strict;
+use warnings;
 use File::Tail;
 use Getopt::Std;
 
-$| = 1;
-
-our($opt_n);
-getopts('n');
+my %opts;
+getopts('n', \%opts);
 
 if (scalar(@ARGV) < 3) {
-  print STDERR <<EOD
-Uzycie:
- $0 [-n] plik_logu 'wzorzec regexp' 'polecenie powloki'
-EOD
-;
-	die("Nieprawidlowa skladnia.\n");
+    print STDERR "Uzycie:\n";
+    print STDERR " $0 [-n] plik_logu 'wzorzec regexp' 'polecenie powloki'\n";
+    die "Nieprawidlowa skladnia.\n";
 }
 
-#print "File: ".$ARGV[0]."\n";
-#print "Regexp: ".$ARGV[1]."\n";
-#print "CMD: ".$ARGV[2]."\n";
-
+my $log_file = $ARGV[0];
 my $regexp_source = $ARGV[1];
+my $command = $ARGV[2];
+
 my $regexp = qr/$regexp_source/;
 
-my $file=File::Tail->new(name => $ARGV[0], interval => 1, maxinterval => 2, ignore_nonexistant => 1);
-my $line;
-while (defined($line=$file->read)) {
-  if ($line =~ /$regexp/) {
-    system($ARGV[2]);
-    if (! $opt_n) {
-      exit 0;
+my $file = File::Tail->new(
+    name => $log_file,
+    interval => 1,
+    maxinterval => 2,
+    ignore_nonexistant => 1
+);
+
+while (defined(my $line = $file->read)) {
+    if ($line =~ /$regexp/) {
+        system($command);
+        if ($opts{n}) {
+            exit 0;
+        }
     }
-  }
 }
 

@@ -1,4 +1,7 @@
-#!/bin/sh
+<<<<<<< HEAD
+#!/usr/bin/env bash
+set -euo pipefail
+# Author: Aleksander Adamowski
 # Vulnerable to leaks due to only considering leaf file's permission bits:
 #find ./ -type f -perm -o+r \
 sudo -u nobody find ./ -type f -readable \

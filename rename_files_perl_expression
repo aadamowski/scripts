@@ -1,8 +1,13 @@
-#!/bin/sh
+#!/bin/bash
+#
+# Description: Wrapper for scripts/rename_files_perl_expression.pl
+# Author: Aleksander Adamowski
+#
+set -euo pipefail
 
-if [ -n "$1" ]; then
-  find ./ -depth -type d -exec rename_file_perl_expression {} "$1" \;
-  find ./ -depth -type f -exec rename_file_perl_expression {} "$1" \;
-else
-  echo usage: $0 perl_expression
+if [[ $# -lt 2 ]]; then
+    printf "Usage: %s <pattern> <substitution>\n" "$0" >&2
+    exit 1
 fi
+
+perl "$(dirname "$0")/rename_files_perl_expression.pl" "$1" "$2"

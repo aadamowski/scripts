@@ -1,11 +1,14 @@
-#!/bin/sh
+#!/usr/bin/env bash
+set -euo pipefail
+# Author: Aleksander Adamowski
 
 
 find ./ -maxdepth 1 -type f -printf '%f\0%T+\n' | \
 perl -pe '
 BEGIN {
-use strict;
-use File::Copy;
+	use strict;
+	use warnings;
+	use File::Copy;
 }
 {
 $_ =~ /^([^\0]+)\0(.*)$/;

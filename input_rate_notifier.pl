@@ -1,43 +1,50 @@
-#!/usr/bin/perl -w
-# by Aleksander Adamowski
-# Wed Nov 23 23:26:12 CET 2005
-# Skrypt wykrywa przekroczenie pewnej ilosci wierszy na ilosc sekund na STDIN
-# i uruchamia dane polecenie powiadamiajace o przekroczeniu.
+#!/usr/bin/env perl
+#
+# Description: Detects if the number of input lines per second exceeds a threshold and runs a notification command.
+# Dependencies: perl
+# Usage: cat large_file.log | ./input_rate_notifier.pl <rows_threshold> <seconds_threshold> '<notification_command>'
+# Author: Aleksander Adamowski
+#
+# Options:
+# - Rows threshold: The number of rows that triggers the check.
+# - Seconds threshold: The time window in seconds.
+# - Notification command: The command to run when threshold is exceeded.
 
 use strict;
+use warnings;
 
 if (scalar(@ARGV) < 3) {
-  die "Uzycie: $0 ilosc_wierszy ilosc_sekund polecenie_powiadamiajace\n";
+    die "Usage: $0 <rows_threshold> <seconds_threshold> '<notification_command'>\n";
 }
 
-my $rowcount = $ARGV[0];
-my $seconds = $ARGV[1];
-my $notificator = $ARGV[2];
+my $row_count_threshold = $ARGV[0];
+my $seconds_threshold = $ARGV[1];
+my $notification_command = $ARGV[2];
+
 my @queue = ();
 
-# Kiedy ostatnio bylo powiadomienie (moze byc nie czesciej, niz ilosc_sekund aby uniknac spamowania):
-my $lastnotification = 0;
-
-my $time;
-my $tailtime;
-my $queuetime;
+# Track the last time a notification was sent to avoid spamming
+my $last_notification_time = 0;
 
 while (<STDIN>) {
-  $time = time;
-  unshift @queue, $time;
-  # Jesli kolejka jest pelna, zaczynamy zdejmowac wpisy z jej konca:
-  if (scalar(@queue) > $rowcount) {
-    pop @queue;
-    # Czas na koncu kolejki:
-    $tailtime = $queue[$#queue];
-    # Jesli koniec kolejki jest malo oddalony w czasie (ponizej $seconds) od poczatku, to przeplywnosc jest przekroczona:
-    $queuetime = (time - $tailtime);
-    if ($queuetime < $seconds && (time - $lastnotification) > $seconds) {
-      # Powiadamiamy:
-      #print "Rate EXCEEDED! $rowcount rows / $queuetime seconds\n";
-      system $notificator or die $?;
-      $lastnotification = time;
-    }
-  }
-}
+    my $current_time = time;
+    unshift @queue, $current_time;
 
+    # If the queue exceeds the row count threshold, check the rate
+    if (scalar(@queue) > $row_count_threshold) {
+        pop @queue;
+        
+        # Time at the end of the queue
+        my $tail_time = $queue[-1];
+        
+        # Time interval for the current window
+        my $queue_interval = $current_time - $tail_time;
+        
+        # Check if the rate is exceeded and we are not spamming
+        if ($queue_interval < $seconds_threshold && ($current_time - $last_notification_time) > $seconds_threshold) {
+            system($notification_command) == 0
+                or die "Error executing notification command: $!\n";
+            $last_notification_time = $current_time;
+        }
+    }
+}

@@ -1,4 +1,12 @@
-#!/bin/sh
-filename="$1" 
+#!/bin/bash
+# Author: Aleksander Adamowski
+set -euo pipefail
+
+if [[ $# -lt 2 ]]; then
+    printf "Usage: %s <filename> <perl_expression>\n" "$0" >&2
+    exit 1
+fi
+
+filename="$1"
 perl_expression="$2"
 mv -v "$filename" "$(echo "$filename" | perl -pe "$perl_expression")"

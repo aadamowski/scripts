@@ -1,4 +1,14 @@
-#!/usr/bin/perl -w -p
+#!/usr/bin/env perl
 #
+# Description: Encodes strings to URL-encoded format.
+# Dependencies: perl
+# Usage: echo "hello world" | ./url_encode.pl
+# Author: Aleksander Adamowski
 
-s/([^A-Za-z0-9])/sprintf("%%%02X", ord($1))/seg;
+use strict;
+use warnings;
+
+while (<>) {
+    s/([^A-Za-z0-9])/sprintf("%%%02X", ord($1))/eg;
+    print;
+}

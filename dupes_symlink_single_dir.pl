@@ -1,108 +1,100 @@
-#!/usr/bin/perl
-# Aleksander Adamowski (s1869)
-# czw paź 28 22:11:16 CEST 2004
-# Znajduje duplikaty obrazkow i zastepuje je symlinkami do oryginalow
+#!/usr/bin/env perl
+#
+# Description: Finds duplicate files by MD5 checksum and optionally replaces them with symlinks to the originals.
+# Dependencies: perl, Digest::MD5, File::Basename, File::Spec
+# Usage: perl dupes_symlink_single_dir.pl [-s] [-n] [-h]
+# Author: Aleksander Adamowski
+#
+# Options:
+# -s: Perform substitution of duplicates with symlinks to originals.
+# -n: Do not perform substitution (just report duplicates).
+# -h: Display help text.
 
 use strict;
+use warnings;
 use Getopt::Std;
-use Fcntl ':mode';
 use File::Basename;
-use Data::Dumper;
-use Digest::MD5;
 use File::Spec;
+use Digest::MD5;
 
-my $debug_recurse = 0;
-my $debug = 0;
-my %file_sizes;
+my %opts;
+getopts('hns', \%opts);
 
-our($opt_h, $opt_n, $opt_s);
-getopts('hns');
-
-if ($opt_h) {
-  print STDERR "Uzycie: $0 [-s -n -h]\n";
-  print STDERR " -s : dokonaj substytucji duplikatow symlinkami do oryginalow\n";
-  print STDERR " -n : nie dokonuj substytucji domyslnie\n";
-  print STDERR " -h : ten tekst pomocy\n";
-  exit(1);
+if ($opts{h}) {
+    print STDERR "Usage: $0 [-s] [-n] [-h]\n";
+    print STDERR " -s : Perform substitution of duplicates with symlinks to originals.\n";
+    print STDERR " -n : Do not perform substitution (just report duplicates).\n";
+    print STDERR " -h : Display help text.\n";
+    exit(0);
 }
 
+my %file_sizes;
 
 descend('.', \&process);
 
 sub descend {
-  my $dirname = shift;
-  my $func = shift;
-  opendir DH, $dirname;
-  my @descend_list;
-  my @process_list;
-  my $entry;
-  my $pathname;
-  while ($entry = readdir(DH)) {
-    if ($entry !~ '^\.$' && $entry !~ '^\.\.$') {
-      $pathname = $dirname.'/'.$entry;
-      if ($debug_recurse) { print "wpis: $pathname\n"; }
-      my $mode = (stat($pathname))[2];
-
-      if (S_ISDIR($mode)) {
-        if ($debug_recurse) { print "$pathname to katalog.\n"; }
-        push @descend_list, $pathname;
-      } elsif (-f $pathname && (! readlink($pathname))) {
-        push @process_list, $pathname;
-        if ($debug_recurse) { print "$pathname to plik.\n"; }
-      }
+    my ($dirname, $func) = @_;
+    opendir(my $dh, $dirname) or die "can't opendir $dirname: $!";
+    
+    my @entries;
+    while (my $entry = readdir($dh)) {
+        next if $entry eq '.' || $entry eq '..';
+        push @entries, $entry;
     }
-  }
-  closedir DH;
-  foreach $pathname (@process_list) {
-    &$func($pathname);
-  }
-  foreach my $subdir (@descend_list) {
-    descend($subdir, $func);
-  }
+    closedir $dh;
+    
+    foreach my $entry (@entries) {
+        my $pathname = File::Spec->catfile($dirname, $entry);
+        
+        # Check if it is a directory or a file (and not a symlink itself, to avoid loops/double processing)
+        if (-d $pathname && ! -l $pathname) {
+            descend($pathname, $func);
+        } elsif (-f $pathname && ! -l $pathname) {
+            $func->($pathname);
+        }
+    }
 }
 
 sub file_checksum {
-  my $pathname = shift;
-  open(FILE, $pathname) or die "Can't open '$pathname': $!";
-  binmode(FILE);
-  my $md5_checksum = Digest::MD5->new->addfile(*FILE)->hexdigest;
-  close(FILE);
-  return $md5_checksum;
+    my ($pathname) = @_;
+    open(my $fh, '<', $pathname) or die "Can't open '$pathname': $!";
+    binmode($fh);
+    my $md5_checksum = Digest::MD5->new->addfile($fh)->hexdigest;
+    close($fh);
+    return $md5_checksum;
 }
 
 sub process {
-  my $pathname = shift;
-  my $pathname = File::Spec->rel2abs($pathname);
-  my $size = (stat($pathname))[7];
-  my $orig_pathname;
+    my ($pathname) = @_;
+    $pathname = File::Spec->rel2abs($pathname);
+    my @stat = stat($pathname);
+    return unless @stat;
+    my $size = $stat[7];
 
-  if (defined($file_sizes{$size})) {
-    # zaladowanie sumy kontrolnej oryginalu na zadanie:
-    if (scalar(keys(%{$file_sizes{$size}})) <= 1) {
-      # sumy kontrolnej oryginalu nie ma
-      $orig_pathname = $file_sizes{$size}{'_orig_'};
-      my $orig_file_checksum = file_checksum($orig_pathname);
-      $file_sizes{$size}{$orig_file_checksum} = $orig_pathname;
-    }
-    my $file_checksum = file_checksum($pathname);
-    if (defined($file_sizes{$size}{$file_checksum})) {
-      # rozpatrywany plik to duplikat wczesniej znalezionego oryginalu
-      $orig_pathname = $file_sizes{$size}{$file_checksum};
+    my $current_checksum = file_checksum($pathname);
 
-      print "$pathname is a dupe of $orig_pathname.";
+    if (exists $file_sizes{$size}) {
+        if (exists $file_sizes{$size}{$current_checksum}) {
+            # It's a duplicate
+            my $dup_of = $file_sizes{$size}{$current_checksum};
+            print "$pathname is a dupe of $dup_of.";
 
-      # Usuniecie duplikatu i zastapienie dowiazaniem do oryginalu:
-      if ($opt_s && (! $opt_n)) {
-        print " Substituting with a symlink to original.\n";
-        unlink $pathname;
-        symlink $orig_pathname, $pathname;
-      } else {
-        print "\n";
-      }
+            if ($opts{s} && !$opts{n}) {
+                print " Substituting with a symlink to original.\n";
+                unlink $pathname or warn "Could not unlink $pathname: $!";
+                symlink $dup_of, $pathname or warn "Could not symlink $pathname to $dup_of: $!";
+            } else {
+                print "\n";
+            }
+        } else {
+            # New unique file for this size
+            $file_sizes{$size}{$current_checksum} = $pathname;
+        }
     } else {
-      $file_sizes{$size}{$file_checksum} = $pathname;
+        # First time seeing this size
+        $file_sizes{$size} = {
+            '_orig_' => $pathname,
+            $current_checksum => $pathname,
+        };
     }
-  } else {
-    $file_sizes{$size} = { '_orig_' => $pathname };
-  }
 }

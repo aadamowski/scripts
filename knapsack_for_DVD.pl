@@ -1,62 +1,63 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 #
-# See perldoc documentation at the end of the script
-# or launch it with the -help option.
-
-
+# Description: Computes an optimal distribution of files in the current directory
+#              for burning to multiple DVD disks using a knapsack algorithm.
+# Dependencies: perl, Filesys::DiskUsage, Algorithm::Knapsack, Getopt::Long, Pod::Usage
+# Usage: perl knapsack_for_DVD.pl [-s SIZE] [-t TIME] [-a ALGO]
+# Author: Aleksander Adamowski
+#
+# Options:
+# -s SIZE: Set the size of a single disk in bytes (default: 8540000000)
+# -t TIME: Set the maximum time of execution in seconds (default: 30)
+# -a ALGO: Choose optimization algorithm: 'random' (default) or 'brute_force'
+#
+use strict;
+use warnings;
 use Getopt::Long;
 use Pod::Usage;
-my $man = 0;
-my $help = 0;
-my $disk_size = 8540000000;
-# About half a minute on a 2 GHz CPU:
-#my $max_rounds = 32768;
-# in seconds:
-my $max_time = 30;
-# May be 'brute_force' or 'random':
-#my $optimization_algorithm='brute_force';
-my $optimization_algorithm='random';
-
-GetOptions(
-		'help|?' => \$help,
-		man => \$man,
-		'size|s=s' => \$disk_size,
-		'time|t=s' => \$max_time,
-		'algo|a=s' => \$optimization_algorithm
-)  or pod2usage(2);
-pod2usage(1) if $help;
-pod2usage(-exitstatus => 0, -verbose => 2) if $man;
-
-
-
-use strict;
 use Filesys::DiskUsage qw/du/;
 use Data::Dumper;
 use Algorithm::Knapsack;
 
-opendir(DIR, '.') || die "can't opendir .: $!";
-my @entries = readdir(DIR);
-closedir DIR;
+my $man = 0;
+my $help = 0;
+my $disk_size = 8540000000;
+my $max_time = 30;
+my $optimization_algorithm = 'random';
+
+GetOptions(
+    'help|?'      => \$help,
+    'man'         => \$man,
+    'size|s=i'    => \$disk_size,
+    'time|t=i'    => \$max_time,
+    'algo|a=s'    => \$optimization_algorithm
+) or pod2usage(2);
+
+pod2usage(1) if $help;
+pod2usage(-exitstatus => 0, -verbose => 2) if $man;
+
+opendir(my $dir_fh, '.') or die "can't opendir .: $!";
+my @entries = readdir($dir_fh);
+closedir $dir_fh;
 
 my %entry_sizes = du( { 'make-hash' => 1 }, @entries );
-#print Dumper(\%entry_sizes);
 
 my %size_entries;
 
 # If sizes aren't unique, we'll get messed up results. There's nothing we can do...
-foreach my $entry (keys %entry_sizes ) {
-	if (defined($size_entries{$entry_sizes{$entry}})) {
-		$size_entries{$entry_sizes{$entry}} .= "|$entry";
-	} else {
-		$size_entries{$entry_sizes{$entry}} = $entry;
-	}
+foreach my $entry (keys %entry_sizes) {
+    if (defined($size_entries{$entry_sizes{$entry}})) {
+        $size_entries{$entry_sizes{$entry}} .= "|$entry";
+    } else {
+        $size_entries{$entry_sizes{$entry}} = $entry;
+    }
 }
 
-my @sizes = values %entry_sizes;
+my @sizes = values %size_entries;
 
 my $knapsack = Algorithm::Knapsack->new(
-        capacity => $disk_size,
-        weights  => \@sizes,
+    capacity => $disk_size,
+    weights  => \@sizes,
 );
 
 print STDERR "Please wait, computing optimal contents...\n";
@@ -64,29 +65,25 @@ $knapsack->compute();
 
 my $solnr = 1;
 foreach my $solution ($knapsack->solutions()) {
-	print "Solution $solnr:\n";
-	my $sum = 0;
-	foreach my $size_index (@{$solution}) {
-		my $size = $sizes[$size_index];
-		print "\t$size\t".$size_entries{$size}."\n";
-		$sum += $size;
-	}
-	print "Sum: $sum\n";
-	$solnr++;
+    print "Solution $solnr:\n";
+    my $sum = 0;
+    foreach my $size_index (@{$solution}) {
+        my $size = $sizes[$size_index];
+        print "\t$size\t".$size_entries{$size}."\n";
+        $sum += $size;
+    }
+    print "Sum: $sum\n";
+    $solnr++;
 }
 
 =head1 NAME
 
-bucketize_for_DVD.pl - compute close to optimal distribution of contents
+knapsack_for_DVD.pl - compute close to optimal distribution of contents
 of the current dir for burning to multiple DVD disks
 
 =head1 SYNOPSIS
 
-bucketize_for_DVD.pl [options]
-
-Options:
-       -help            brief help message
-       -man             full documentation
+knapsack_for_DVD.pl [options]
 
 =head1 OPTIONS
 
@@ -104,11 +101,11 @@ Prints the manual page and exits.
 
 Sets the size of a single disk in bytes.
 
-=item B<-time, -t SIZE>
+=item B<-time, -t TIME>
 
 Sets the maximum time of execution in seconds.
 
-=item B<-algo, -a SIZE>
+=item B<-algo, -a ALGO>
 
 Chooses the optimization algorithm to use. Possible algorithms are:
 
@@ -142,3 +139,5 @@ Typical sizes of DVD writable disks:
 Source: Wikipedia (http://en.wikipedia.org/wiki/DVD#DVD_capacity).
 
 =cut
+
+

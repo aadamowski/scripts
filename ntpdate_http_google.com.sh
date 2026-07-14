@@ -1,4 +1,6 @@
-#!/bin/sh
+#!/usr/bin/env bash
+set -euo pipefail
+# Author: Aleksander Adamowski
 # Poor person's ntpdate using timestamps reported in HTTP headers by google.com.
 # For use in constrained environments where NTP client cannot run.
 

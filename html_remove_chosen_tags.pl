@@ -1,31 +1,35 @@
-#!/usr/bin/perl -w
-# Aleksander Adamowski (s1869)
-# nie lis 21 12:24:48 CET 2004
-# Usuwa wybrane tagi z dokumentu HTML
-
+#!/usr/bin/env perl
+#
+# Description: Removes specified HTML tags (script, iframe) from an HTML document.
+# Dependencies: perl, HTML::Parser
+# Usage: perl html_remove_chosen_tags.pl <file.html>
+# Author: Aleksander Adamowski
+#
+# Note: This script uses HTML::Parser to identify and skip specific tags.
 
 use strict;
-use HTML::Parser ();
-#use encoding "utf-8";
-#use open ':utf8';
-#use open OUT => ':utf8';
-#use open IN => ':utf8';
-#use open ':std'; 
+use warnings;
 use utf8;
+use HTML::Parser;
 
-sub handler
-{
-  my $text = shift;
-  my $tagname = shift;
-  if (defined($tagname)) {
-    if ( $tagname =~ 'script' || $tagname =~ 'iframe' )  { return; }
-  } 
-  print $text."\n";
+sub handler {
+    my ($text, $tagname) = @_;
+    
+    if (defined $tagname) {
+        # Skip script and iframe tags
+        return if $tagname eq 'script' || $tagname eq 'iframe';
+    }
+    
+    print $text if defined $text;
 }
 
+my $filename = shift or die "Usage: $0 <file.html>\n";
 
-my $p = HTML::Parser->new(api_version => 3);
-$p->handler( default => \&handler, 'text, tagname');
-$p->parse_file(shift || die) || die $!;
+my $parser = HTML::Parser->new(api_version => 3);
+$parser->handler(default => \&handler, 'text, tagname');
+
+$parser->parse_file($filename) or die "Parsing error: $!";
+
 print "\n";
+
 
