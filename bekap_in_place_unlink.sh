@@ -7,9 +7,9 @@
 if [ $# -ge 1 ]; then
 	while [ $# -ne 0 ]; do
 		if [ -e "$1" ]; then
-			curdate=$(date +%Y_%m_%d_%H=%M=%S)
+			curdate=$(date +%F_%H=%M=%S)
 			basename=$(basename "$1")
-			mv -ai "$1" "$1.${curdate}"
+			mv -i "$1" "$1.${curdate}"
 			bzip2 "$1.${curdate}"
 		else
 			echo "plik $1 nie istnieje"
