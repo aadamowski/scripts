@@ -30,6 +30,7 @@ task_id), so the snapshot reflects the page just navigated to.
 import json
 import sys
 
+from hermes_cli.env_loader import load_hermes_dotenv
 from tools.registry import registry
 
 # Importing the tool module executes its module-level registry.register()
@@ -37,6 +38,16 @@ from tools.registry import registry
 # defines the (empty) registry singleton, so without this import those entries
 # would not exist.
 import tools.browser_tool  # noqa: F401  (side effect: registers browser tools)
+
+# Load ~/.hermes/.env exactly the way a full Hermes session (cli.py /
+# gateway/run.py) does, so backends configured via env — notably CAMOFOX_URL —
+# are active here too. Without this, tools.browser_camofox.is_camofox_mode()
+# is False (CAMOFOX_URL is unset in a bare shell) and browser_navigate falls
+# through to the local agent-browser CLI, which is not installed, so the
+# dispatch blocks on a browser that never comes up. Mirroring the session's
+# env load routes the call through the same Camofox REST backend the session
+# uses.
+load_hermes_dotenv()
 
 
 def _print_json(label: str, result) -> None:
